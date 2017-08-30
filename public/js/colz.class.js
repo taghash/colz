@@ -77,79 +77,33 @@
   */
 
   class Color {
-    constructor (...args) {
-      this.hex = null
-      this.r = null
-      this.g = null
-      this.b = null
-      this.h = null
-      this.s = null
-      this.l = null
-      this.a = null
-      this.hsl = null
-      this.hsla = null
-      this.rgb = null
-      this.rgba = null
-      /*
-      this.hslString = null
-      this.hslaString = null
-      this.rgbString = null
-      this.rgbaString = null
-      */
-
-      // Init
-      // Argument is string -> Hex color
-      if (typeof args[0] === 'string') {
+    constructor (r, g, b, a = 1.0) {
+      // If args are not given in (r, g, b, [a]) format, convert
+      if (typeof r === 'string') {
+        let str = r
         // Add initial '#' if missing
-        if (args[0].charAt(0) !== '#') { args[0] = '#' + args[0] }
+        if (str.charAt(0) !== '#') { str = '#' + str }
         // If Hex in #fff format convert to #ffffff
-        if (args[0].length < 7) {
-          args[0] = '#' + args[0][1] + args[0][1] + args[0][2] + args[0][2] + args[0][3] + args[0][3]
+        if (str.length < 7) {
+          str = '#' + str[1] + str[1] + str[2] + str[2] + str[3] + str[3]
         }
-
-        this.hex = args[0].toLowerCase()
-
-        this.rgb = new Rgb(hexToRgb(this.hex))
-        this.r = this.rgb.r
-        this.g = this.rgb.g
-        this.b = this.rgb.b
-        this.a = 1.0
-        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
+        ([r, g, b] = hexToRgb(str))
+      } else if (r instanceof Array) {
+        a = r[3] || a
+        b = r[2]
+        g = r[1]
+        r = r[0]
       }
 
-      // First argument is number -> Rgb[A]
-      if (typeof args[0] === 'number') {
-        this.r = args[0]
-        this.g = args[1]
-        this.b = args[2]
-        if (typeof args[3] === 'undefined') {
-          this.a = 1.0
-        } else {
-          this.a = args[3]
-        }
+      this.r = r
+      this.g = g
+      this.b = b
+      this.a = a
 
-        this.rgb = new Rgb([this.r, this.g, this.b])
-        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
-        this.hex = rgbToHex(this.r, this.g, this.b)
-      }
+      this.rgb = new Rgb([this.r, this.g, this.b])
+      this.rgba = new Rgba([this.r, this.g, this.b, this.a])
+      this.hex = rgbToHex(this.r, this.g, this.b)
 
-      // Argument is Array -> Rgb[A]
-      if (args[0] instanceof Array) {
-        this.r = args[0][0]
-        this.g = args[0][1]
-        this.b = args[0][2]
-        if (typeof args[0][3] === 'undefined') {
-          this.a = 1.0
-        } else {
-          this.a = args[0][3]
-        }
-
-        this.rgb = new Rgb([this.r, this.g, this.b])
-        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
-        this.hex = rgbToHex(this.r, this.g, this.b)
-      }
-
-      // Common
       this.hsl = new Hsl(rgbToHsl(this.r, this.g, this.b))
       this.h = this.hsl.h
       this.s = this.hsl.s
