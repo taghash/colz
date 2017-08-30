@@ -1,3 +1,4 @@
+'use strict'
 /**
  * Colorz (or Colz) is a Javascript "library" to help
  * in color conversion between the usual color-spaces
@@ -12,35 +13,10 @@
  * Some formulas borrowed from Wikipedia or other authors.
  */
 
-/*
- Universal JavaScript Module, supports AMD (RequireJS), Node.js, and the browser.
- https://gist.github.com/kirel/1268753
-*/
-
-(function () {
+;(function () {
   /* Namespace container */
 
   const round = Math.round
-  const toString = 'toString'
-  const colz = {}
-  let Rgb
-  let Rgba
-  let Hsl
-  let Hsla
-  let Color
-  let ColorScheme
-  let hexToRgb
-  let componentToHex
-  let rgbToHex
-  let rgbToHsl
-  let hue2rgb
-  let hslToRgb
-  let rgbToHsb
-  let hsbToRgb
-  let hsbToHsl
-  let hsvToHsl
-  let hsvToRgb
-  let randomColor
 
   /*
    ==================================
@@ -48,46 +24,50 @@
    ==================================
   */
 
-  Rgb = colz.Rgb = function (col) {
-    this.r = col[0]
-    this.g = col[1]
-    this.b = col[2]
+  class Rgb {
+    constructor (col) {
+      this.r = col[0]
+      this.g = col[1]
+      this.b = col[2]
+    }
+
+    toString () {
+      return `rgb(${this.r},${this.g},${this.b})`
+    }
   }
 
-  Rgb.prototype[toString] = function () {
-    return 'rgb(' + this.r + ',' + this.g + ',' + this.b + ')'
+  class Rgba extends Rgb {
+    constructor (col) {
+      super(col)
+      this.a = col[3]
+    }
+
+    toString () {
+      return `rgba(${this.r},${this.g},${this.b},${this.a})`
+    }
   }
 
-  Rgba = colz.Rgba = function (col) {
-    this.r = col[0]
-    this.g = col[1]
-    this.b = col[2]
-    this.a = col[3]
+  class Hsl {
+    constructor (col) {
+      this.h = col[0]
+      this.s = col[1]
+      this.l = col[2]
+    }
+
+    toString () {
+      return `hsl(${this.h},${this.s}%,${this.l}%)`
+    }
   }
 
-  Rgba.prototype[toString] = function () {
-    return 'rgba(' + this.r + ',' + this.g + ',' + this.b + ',' + this.a + ')'
-  }
+  class Hsla extends Hsl {
+    constructor (col) {
+      super(col)
+      this.a = col[3]
+    }
 
-  Hsl = colz.Hsl = function (col) {
-    this.h = col[0]
-    this.s = col[1]
-    this.l = col[2]
-  }
-
-  Hsl.prototype[toString] = function () {
-    return 'hsl(' + this.h + ',' + this.s + '%,' + this.l + '%)'
-  }
-
-  Hsla = colz.Hsla = function (col) {
-    this.h = col[0]
-    this.s = col[1]
-    this.l = col[2]
-    this.a = col[3]
-  }
-
-  Hsla.prototype[toString] = function () {
-    return 'hsla(' + this.h + ',' + this.s + '%,' + this.l + '%,' + this.a + ')'
+    toString () {
+      return `hsla(${this.h},${this.s}%,${this.l}%,${this.a})`
+    }
   }
 
   /*
@@ -96,142 +76,130 @@
    ==================================
   */
 
-  Color = colz.Color = function () {
-    this.hex = null
-    this.r = null
-    this.g = null
-    this.b = null
-    this.h = null
-    this.s = null
-    this.l = null
-    this.a = null
-    this.hsl = null
-    this.hsla = null
-    this.rgb = null
-    this.rgba = null
-    /*
-    this.hslString = null
-    this.hslaString = null
-    this.rgbString = null
-    this.rgbaString = null
-    */
+  class Color {
+    constructor (...args) {
+      this.hex = null
+      this.r = null
+      this.g = null
+      this.b = null
+      this.h = null
+      this.s = null
+      this.l = null
+      this.a = null
+      this.hsl = null
+      this.hsla = null
+      this.rgb = null
+      this.rgba = null
+      /*
+      this.hslString = null
+      this.hslaString = null
+      this.rgbString = null
+      this.rgbaString = null
+      */
 
-    // Init
-    this.init(arguments)
-  } // colz.color
+      // Init
+      // Argument is string -> Hex color
+      if (typeof args[0] === 'string') {
+        // Add initial '#' if missing
+        if (args[0].charAt(0) !== '#') { args[0] = '#' + args[0] }
+        // If Hex in #fff format convert to #ffffff
+        if (args[0].length < 7) {
+          args[0] = '#' + args[0][1] + args[0][1] + args[0][2] + args[0][2] + args[0][3] + args[0][3]
+        }
 
-  const colorPrototype = Color.prototype
+        this.hex = args[0].toLowerCase()
 
-  colorPrototype.init = function (arg) {
-    const _this = this
-
-    // Argument is string -> Hex color
-    if (typeof arg[0] === 'string') {
-      // Add initial '#' if missing
-      if (arg[0].charAt(0) !== '#') { arg[0] = '#' + arg[0] }
-      // If Hex in #fff format convert to #ffffff
-      if (arg[0].length < 7) {
-        arg[0] = '#' + arg[0][1] + arg[0][1] + arg[0][2] + arg[0][2] + arg[0][3] + arg[0][3]
+        this.rgb = new Rgb(hexToRgb(this.hex))
+        this.r = this.rgb.r
+        this.g = this.rgb.g
+        this.b = this.rgb.b
+        this.a = 1.0
+        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
       }
 
-      _this.hex = arg[0].toLowerCase()
+      // First argument is number -> Rgb[A]
+      if (typeof args[0] === 'number') {
+        this.r = args[0]
+        this.g = args[1]
+        this.b = args[2]
+        if (typeof args[3] === 'undefined') {
+          this.a = 1.0
+        } else {
+          this.a = args[3]
+        }
 
-      _this.rgb = new Rgb(hexToRgb(_this.hex))
-      _this.r = _this.rgb.r
-      _this.g = _this.rgb.g
-      _this.b = _this.rgb.b
-      _this.a = 1.0
-      _this.rgba = new Rgba([_this.r, _this.g, _this.b, _this.a])
-    }
-
-    // First argument is number -> Rgb[A]
-    if (typeof arg[0] === 'number') {
-      _this.r = arg[0]
-      _this.g = arg[1]
-      _this.b = arg[2]
-      if (typeof arg[3] === 'undefined') {
-        _this.a = 1.0
-      } else {
-        _this.a = arg[3]
+        this.rgb = new Rgb([this.r, this.g, this.b])
+        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
+        this.hex = rgbToHex(this.r, this.g, this.b)
       }
 
-      _this.rgb = new Rgb([_this.r, _this.g, _this.b])
-      _this.rgba = new Rgba([_this.r, _this.g, _this.b, _this.a])
-      _this.hex = rgbToHex([_this.r, _this.g, _this.b])
-    }
+      // Argument is Array -> Rgb[A]
+      if (args[0] instanceof Array) {
+        this.r = args[0][0]
+        this.g = args[0][1]
+        this.b = args[0][2]
+        if (typeof args[0][3] === 'undefined') {
+          this.a = 1.0
+        } else {
+          this.a = args[0][3]
+        }
 
-    // Argument is Array -> Rgb[A]
-    if (arg[0] instanceof Array) {
-      _this.r = arg[0][0]
-      _this.g = arg[0][1]
-      _this.b = arg[0][2]
-      if (typeof arg[0][3] === 'undefined') {
-        _this.a = 1.0
-      } else {
-        _this.a = arg[0][3]
+        this.rgb = new Rgb([this.r, this.g, this.b])
+        this.rgba = new Rgba([this.r, this.g, this.b, this.a])
+        this.hex = rgbToHex(this.r, this.g, this.b)
       }
 
-      _this.rgb = new Rgb([_this.r, _this.g, _this.b])
-      _this.rgba = new Rgba([_this.r, _this.g, _this.b, _this.a])
-      _this.hex = rgbToHex([_this.r, _this.g, _this.b])
+      // Common
+      this.hsl = new Hsl(rgbToHsl(this.r, this.g, this.b))
+      this.h = this.hsl.h
+      this.s = this.hsl.s
+      this.l = this.hsl.l
+      this.hsla = new Hsla([this.h, this.s, this.l, this.a])
     }
 
-    // Common
-    _this.hsl = new Hsl(colz.rgbToHsl([_this.r, _this.g, _this.b]))
-    _this.h = _this.hsl.h
-    _this.s = _this.hsl.s
-    _this.l = _this.hsl.l
-    _this.hsla = new Hsla([_this.h, _this.s, _this.l, _this.a])
-  } // init
+    setHue (newHue) {
+      this.h = newHue
+      this.hsl.h = newHue
+      this.hsla.h = newHue
+      this.updateFromHsl()
+    }
 
-  colorPrototype.setHue = function (newhue) {
-    const _this = this
+    setSat (newSat) {
+      this.s = newSat
+      this.hsl.s = newSat
+      this.hsla.s = newSat
+      this.updateFromHsl()
+    }
 
-    _this.h = newhue
-    _this.hsl.h = newhue
-    _this.hsla.h = newhue
-    _this.updateFromHsl()
-  } // setHue
+    setLum (newLum) {
+      this.l = newLum
+      this.hsl.l = newLum
+      this.hsla.l = newLum
+      this.updateFromHsl()
+    }
 
-  colorPrototype.setSat = function (newsat) {
-    const _this = this
+    setAlpha (newAlpha) {
+      this.a = newAlpha
+      this.hsla.a = newAlpha
+      this.rgba.a = newAlpha
+    }
 
-    _this.s = newsat
-    _this.hsl.s = newsat
-    _this.hsla.s = newsat
-    _this.updateFromHsl()
-  } // setSat
+    updateFromHsl () {
+      // Updates Rgb
+      this.rgb = null
+      this.rgb = new Rgb(hslToRgb(this.h, this.s, this.l))
 
-  colorPrototype.setLum = function (newlum) {
-    const _this = this
+      this.r = this.rgb.r
+      this.g = this.rgb.g
+      this.b = this.rgb.b
+      this.rgba.r = this.rgb.r
+      this.rgba.g = this.rgb.g
+      this.rgba.b = this.rgb.b
 
-    _this.l = newlum
-    _this.hsl.l = newlum
-    _this.hsla.l = newlum
-    _this.updateFromHsl()
-  } // setLum
-
-  colorPrototype.setAlpha = function (newalpha) {
-    this.a = newalpha
-    this.hsla.a = newalpha
-    this.rgba.a = newalpha
-  }
-
-  colorPrototype.updateFromHsl = function () {
-    // Updates Rgb
-    this.rgb = null
-    this.rgb = new Rgb(colz.hslToRgb([this.h, this.s, this.l]))
-
-    this.r = this.rgb.r
-    this.g = this.rgb.g
-    this.b = this.rgb.b
-    this.rgba.r = this.rgb.r
-    this.rgba.g = this.rgb.g
-    this.rgba.b = this.rgb.b
-
-    // Updates Hex
-    this.hex = null
-    this.hex = rgbToHex([this.r, this.g, this.b])
+      // Updates Hex
+      this.hex = null
+      this.hex = rgbToHex([this.r, this.g, this.b])
+    }
   }
 
   /*
@@ -240,12 +208,12 @@
    ==================================
   */
 
-  randomColor = colz.randomColor = function () {
+  const randomColor = function () {
     const r = '#' + Math.random().toString(16).slice(2, 8)
     return new Color(r)
   }
 
-  hexToRgb = colz.hexToRgb = function (hex) {
+  const hexToRgb = function (hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
     return result ? [
       parseInt(result[1], 16),
@@ -254,25 +222,17 @@
     ] : null
   }
 
-  componentToHex = colz.componentToHex = function (c) {
+  const componentToHex = function (c) {
     const hex = c.toString(16)
     return hex.length === 1 ? '0' + hex : hex
   }
 
   // You can pass 3 numeric values or 1 Array
-  rgbToHex = colz.rgbToHex = function () { // r, g, b
-    let arg, r, g, b
-
-    arg = arguments
-
-    if (arg.length > 1) {
-      r = arg[0]
-      g = arg[1]
-      b = arg[2]
-    } else {
-      r = arg[0][0]
-      g = arg[0][1]
-      b = arg[0][2]
+  const rgbToHex = function (r, g, b) {
+    if (r instanceof Array) {
+      b = r[2]
+      g = r[1]
+      r = r[0]
     }
     return '#' + componentToHex(r) + componentToHex(g) + componentToHex(b)
   }
@@ -281,25 +241,19 @@
    * Converts an RGB color value to HSL. Conversion formula
    * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
    *
-   * @param   Number  r       The red color value
-   * @param   Number  g       The green color value
-   * @param   Number  b       The blue color value
-   * @return  Array           The HSL representation
+   * @param {Number} r The red color value
+   * @param {Number} g The green color value
+   * @param {Number} b The blue color value
+   * @return {Array} The HSL representation
    */
-  rgbToHsl = colz.rgbToHsl = function () {
-    let arg, r, g, b, h, s, l, d, max, min
-
-    arg = arguments
-
-    if (typeof arg[0] === 'number') {
-      r = arg[0]
-      g = arg[1]
-      b = arg[2]
-    } else {
-      r = arg[0][0]
-      g = arg[0][1]
-      b = arg[0][2]
+  const rgbToHsl = function (r, g, b) {
+    if (r instanceof Array) {
+      b = r[2]
+      g = r[1]
+      r = r[0]
     }
+
+    let h, s, l, d, max, min
 
     r /= 255
     g /= 255
@@ -338,17 +292,7 @@
     return [h, s, l]
   }
 
-  /**
-   * Converts an HSL color value to RGB. Conversion formula
-   * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
-   *
-   * @param   Number  h       The hue
-   * @param   Number  s       The saturation
-   * @param   Number  l       The lightness
-   * @return  Array           The RGB representation
-   */
-
-  hue2rgb = colz.hue2rgb = function (p, q, t) {
+  const hue2rgb = function (p, q, t) {
     if (t < 0) { t += 1 }
     if (t > 1) { t -= 1 }
     if (t < 1 / 6) { return p + (q - p) * 6 * t }
@@ -357,29 +301,36 @@
     return p
   }
 
-  hslToRgb = colz.hslToRgb = function () {
-    let arg, r, g, b, h, s, l, q, p
+  /**
+   * Converts an HSL color value to RGB. Conversion formula
+   * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
+   *
+   * @param {Number} h The hue
+   * @param {Number} s The saturation
+   * @param {Number} l The lightness
+   * @return {Array} The RGB representation
+   */
 
-    arg = arguments
-
-    if (typeof arg[0] === 'number') {
-      h = arg[0] / 360
-      s = arg[1] / 100
-      l = arg[2] / 100
-    } else {
-      h = arg[0][0] / 360
-      s = arg[0][1] / 100
-      l = arg[0][2] / 100
+  const hslToRgb = function (h, s, l) {
+    if (h instanceof Array) {
+      l = h[2]
+      s = h[1]
+      h = h[0]
     }
+    h = h / 360
+    s = s / 100
+    l = l / 100
+
+    let r, g, b, q, p
 
     if (s === 0) {
       r = g = b = l // achromatic
     } else {
       q = l < 0.5 ? l * (1 + s) : l + s - l * s
       p = 2 * l - q
-      r = colz.hue2rgb(p, q, h + 1 / 3)
-      g = colz.hue2rgb(p, q, h)
-      b = colz.hue2rgb(p, q, h - 1 / 3)
+      r = hue2rgb(p, q, h + 1 / 3)
+      g = hue2rgb(p, q, h)
+      b = hue2rgb(p, q, h - 1 / 3)
     }
     return [round(r * 255), round(g * 255), round(b * 255)]
   }
@@ -388,12 +339,12 @@
    * Converts an RGB color value to HSB / HSV. Conversion formula
    * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
    *
-   * @param   Number  r       The red color value
-   * @param   Number  g       The green color value
-   * @param   Number  b       The blue color value
-   * @return  Array           The HSB representation
+   * @param {Number} r The red color value
+   * @param {Number} g The green color value
+   * @param {Number} b The blue color value
+   * @return {Array} The HSB representation
    */
-  rgbToHsb = colz.rgbToHsb = function (r, g, b) {
+  const rgbToHsb = function (r, g, b) {
     let max, min, h, s, v, d
 
     r = r / 255
@@ -436,12 +387,12 @@
    * Converts an HSB / HSV color value to RGB. Conversion formula
    * adapted from http://en.wikipedia.org/wiki/HSV_color_space.
    *
-   * @param   Number  h       The hue
-   * @param   Number  s       The saturation
-   * @param   Number  v       The value
-   * @return  Array           The RGB representation
+   * @param {Number} h The hue
+   * @param {Number} s The saturation
+   * @param {Number} v The value
+   * @return {Array} The RGB representation
    */
-  hsbToRgb = colz.hsbToRgb = function (h, s, v) {
+  const hsbToRgb = function (h, s, v) {
     let r, g, b, i, f, p, q, t
 
     // h = h / 360;
@@ -491,89 +442,105 @@
   }
 
   /* Convert from Hsv */
-  hsbToHsl = colz.hsbToHsl = function (h, s, b) {
-    return colz.rgbToHsl(colz.hsbToRgb(h, s, b))
+  const hsbToHsl = function (h, s, b) {
+    return rgbToHsl(hsbToRgb(h, s, b))
   }
-
-  /* Alias */
-  hsvToHsl = colz.hsvToHsl = colz.hsbToHsl
-  hsvToRgb = colz.hsvToRgb = colz.hsbToRgb
 
   /*
    ==================================
    Color Scheme Builder
    ==================================
   */
+  class ColorScheme {
+    constructor (colorVal, angleArray) {
+      this.palette = []
 
-  ColorScheme = colz.ColorScheme = function (colorVal, angleArray) {
-    this.palette = []
-
-    if (angleArray === undefined && colorVal instanceof Array) {
-      // Asume you passing a color array ['#f00','#0f0'...]
-      this.createFromColors(colorVal)
-    } else {
-      // Create scheme from color + hue angles
-      this.createFromAngles(colorVal, angleArray)
-    }
-  }
-
-  const colorSchemePrototype = ColorScheme.prototype
-
-  colorSchemePrototype.createFromColors = function (colorVal) {
-    for (let i in colorVal) {
-      if (colorVal.hasOwnProperty(i)) {
-        // console.log(colorVal[i]);
-        this.palette.push(new Color(colorVal[i]))
+      if (angleArray === undefined && colorVal instanceof Array) {
+        // Asume you passing a color array ['#f00','#0f0'...]
+        this.createFromColors(colorVal)
+      } else {
+        // Create scheme from color + hue angles
+        this.createFromAngles(colorVal, angleArray)
       }
     }
-    return this.palette
-  } // createFromColors
 
-  colorSchemePrototype.createFromAngles = function (colorVal, angleArray) {
-    this.palette.push(new Color(colorVal))
-
-    for (let i in angleArray) {
-      if (angleArray.hasOwnProperty(i)) {
-        const tempHue = (this.palette[0].h + angleArray[i]) % 360
-        this.palette.push(new Color(colz.hslToRgb([tempHue, this.palette[0].s, this.palette[0].l])))
+    createFromColors (colorVal) {
+      for (let i in colorVal) {
+        if (colorVal.hasOwnProperty(i)) {
+          // console.log(colorVal[i]);
+          this.palette.push(new Color(colorVal[i]))
+        }
       }
+      return this.palette
     }
-    return this.palette
-  } // createFromAngles
 
-  /* Complementary colors constructors */
-  ColorScheme.Compl = function (colorVal) {
-    return new ColorScheme(colorVal, [180])
+    createFromAngles (colorVal, angleArray) {
+      this.palette.push(new Color(colorVal))
+
+      for (let i in angleArray) {
+        if (angleArray.hasOwnProperty(i)) {
+          const tempHue = (this.palette[0].h + angleArray[i]) % 360
+          this.palette.push(new Color(hslToRgb(tempHue, this.palette[0].s, this.palette[0].l)))
+        }
+      }
+      return this.palette
+    }
+
+    /* Complementary colors constructors */
+    static Compl (colorVal) {
+      return new this(colorVal, [180])
+    }
+
+    /* Triad */
+    static Triad (colorVal) {
+      return new this(colorVal, [120, 240])
+    }
+
+    /* Tetrad */
+    static Tetrad (colorVal) {
+      return new this(colorVal, [60, 180, 240])
+    }
+
+    /* Analogous */
+    static Analog (colorVal) {
+      return new this(colorVal, [-45, 45])
+    }
+
+    /* Split complementary */
+    static Split (colorVal) {
+      return new this(colorVal, [150, 210])
+    }
+
+    /* Accented Analogous */
+    static Accent (colorVal) {
+      return new this(colorVal, [-45, 45, 180])
+    }
   }
 
-  /* Triad */
-  ColorScheme.Triad = function (colorVal) {
-    return new ColorScheme(colorVal, [120, 240])
-  }
-
-  /* Tretrad */
-  ColorScheme.Tetrad = function (colorVal) {
-    return new ColorScheme(colorVal, [60, 180, 240])
-  }
-
-  /* Analogous */
-  ColorScheme.Analog = function (colorVal) {
-    return new ColorScheme(colorVal, [-45, 45])
-  }
-
-  /* Split complementary */
-  ColorScheme.Split = function (colorVal) {
-    return new ColorScheme(colorVal, [150, 210])
-  }
-
-  /* Accented Analogous */
-  ColorScheme.Accent = function (colorVal) {
-    return new ColorScheme(colorVal, [-45, 45, 180])
+  const colz = {
+    Rgb,
+    Rgba,
+    Hsl,
+    Hsla,
+    Color,
+    ColorScheme,
+    hexToRgb,
+    componentToHex,
+    rgbToHex,
+    rgbToHsl,
+    hue2rgb,
+    hslToRgb,
+    rgbToHsb,
+    hsbToRgb,
+    hsbToHsl,
+    hsvToHsl: hsbToHsl, // alias
+    hsvToRgb: hsbToRgb, // alias
+    randomColor
   }
 
   if (typeof module !== 'undefined' && module.exports) { // CommonJS
     module.exports = colz
   } else { // Browser
-    global.colz = colz
+    window.colz = colz
   }
 })()

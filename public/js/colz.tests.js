@@ -124,12 +124,12 @@ $(document).ready(function () {
   // Color schemes visual samples
   const sch = []
   const tcol = '#F43E71'
-  sch.push(new colz.ColorScheme.Compl(tcol))
-  sch.push(new colz.ColorScheme.Triad(tcol))
-  sch.push(new colz.ColorScheme.Tetrad(tcol))
-  sch.push(new colz.ColorScheme.Analog(tcol))
-  sch.push(new colz.ColorScheme.Accent(tcol))
-  sch.push(new colz.ColorScheme.Split(tcol))
+  sch.push(colz.ColorScheme.Compl(tcol))
+  sch.push(colz.ColorScheme.Triad(tcol))
+  sch.push(colz.ColorScheme.Tetrad(tcol))
+  sch.push(colz.ColorScheme.Analog(tcol))
+  sch.push(colz.ColorScheme.Accent(tcol))
+  sch.push(colz.ColorScheme.Split(tcol))
   sch.push(new colz.ColorScheme(tcol, [50, 60, 80]))
 
   // Loop color schemes
