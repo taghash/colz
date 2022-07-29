@@ -3,15 +3,11 @@
   "version": "0.1.0",
   "description": "JS library to convert between color spaces.",
   "main": "dist/colz.js",
-  "browser": "dist/colz.browser.js",
+  "browser": "dist/colz.js",
   "module": "dist/colz.js",
   "scripts": {
     "build": "webpack --progress --profile",
-    "postinstall": "webpack --progress --profile",
-    "test": "echo \"Open test/index.html to run the tests\" && exit 1",
-    "build_cjs": "rollup -m -i src/colz.js -o dist/colz.cjs.js -f cjs",
-    "build_browser": "rollup -m -i src/colz.js -o dist/colz.browser.js -f iife -n colz",
-    "prepublish": "npm run build_cjs && npm run build_browser"
+    "postinstall": "webpack --progress --profile"
   },
   "repository": {
     "type": "git",
